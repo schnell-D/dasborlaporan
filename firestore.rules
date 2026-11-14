@@ -1,0 +1,57 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null && request.auth.token.email_verified == true;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidUserProfile(data) {
+      return data.keys().hasOnly([
+        'sheetUrl',
+        'monthlyTarget',
+        'demoMode',
+        'packageRates',
+        'bookOverrides',
+        'dummyStatuses',
+        'bookNotes',
+        'updatedAt'
+      ])
+      && (!('sheetUrl' in data) || (data.sheetUrl is string && data.sheetUrl.size() <= 1024))
+      && (!('monthlyTarget' in data) || (data.monthlyTarget is number && data.monthlyTarget > 0 && data.monthlyTarget <= 10000))
+      && (!('demoMode' in data) || (data.demoMode is bool))
+      && (!('packageRates' in data) || (data.packageRates is map))
+      && (!('bookOverrides' in data) || (data.bookOverrides is map))
+      && (!('dummyStatuses' in data) || (data.dummyStatuses is map))
+      && (!('bookNotes' in data) || (data.bookNotes is map))
+      && (!('updatedAt' in data) || (data.updatedAt is string && data.updatedAt.size() <= 64));
+    }
+
+    // Default deny all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Koleksi konfigurasi pengguna: hanya dapat dibaca dan diubah oleh pemilik akun sendiri
+    match /users/{userId} {
+      allow get: if isOwner(userId) && isValidId(userId);
+      allow list: if false; // Mencegah scraping seluruh daftar pengguna
+      allow create: if isOwner(userId) && isValidId(userId) && isValidUserProfile(incoming());
+      allow update: if isOwner(userId) && isValidId(userId) && isValidUserProfile(incoming());
+      allow delete: if isOwner(userId) && isValidId(userId);
+    }
+  }
+}

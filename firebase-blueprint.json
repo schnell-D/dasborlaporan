@@ -1,0 +1,53 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Profil dan konfigurasi dasbor layout buku yang tersinkronisasi antar perangkat",
+      "type": "object",
+      "properties": {
+        "sheetUrl": {
+          "type": "string",
+          "maxLength": 1024,
+          "description": "URL Google Sheet yang dihubungkan ke akun pengguna"
+        },
+        "monthlyTarget": {
+          "type": "number",
+          "description": "Target penyelesaian buku bulanan"
+        },
+        "demoMode": {
+          "type": "boolean",
+          "description": "Status mode demo data contoh"
+        },
+        "packageRates": {
+          "type": "object",
+          "description": "Tarif jasa layout per halaman untuk masing-masing paket"
+        },
+        "bookOverrides": {
+          "type": "object",
+          "description": "Perubahan judul, penulis, atau status buku"
+        },
+        "dummyStatuses": {
+          "type": "object",
+          "description": "Status cetak dummy per nomor buku"
+        },
+        "bookNotes": {
+          "type": "object",
+          "description": "Catatan track record dan revisi buku"
+        },
+        "updatedAt": {
+          "type": "string",
+          "maxLength": 64,
+          "description": "Waktu pembaruan data terakhir ISO string"
+        }
+      }
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": {
+        "$ref": "#/entities/UserProfile"
+      },
+      "description": "Koleksi data konfigurasi dan catatan buku milik pengguna yang terisolasi per UID"
+    }
+  }
+}
